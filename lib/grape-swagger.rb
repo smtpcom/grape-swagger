@@ -41,7 +41,8 @@ module Grape
               :api_version => '0.1',
               :markdown => false,
               :hide_documentation_path => false,
-              :hide_format => false
+              :hide_format => false,
+              :models => []
             }
             options = defaults.merge(options)
 
@@ -88,6 +89,7 @@ module Grape
               routes_array = routes.map do |route|
                 notes = route.route_notes && @@markdown ? Kramdown::Document.new(strip_heredoc(route.route_notes)).to_html : route.route_notes
                 http_codes = parse_http_codes route.route_http_codes
+                models << route.route_entity if route.route_entity
                 operations = {
                     :notes => notes,
                     :summary => route.route_description || '',
@@ -97,19 +99,22 @@ module Grape
                       parse_params(route.route_params, route.route_path, route.route_method)
                 }
                 operations.merge!({:errorResponses => http_codes}) unless http_codes.empty?
+                operations.merge!({:responseClass => route.route_entity.to_s.split('::')[-1]}) if route.route_entity
                 {
                   :path => parse_path(route.route_path, api_version),
                   :operations => [operations]
                 }
               end
 
-              {
+              api_description = {
                 apiVersion: api_version,
                 swaggerVersion: "1.1",
                 basePath: parse_base_path(base_path, request),
                 resourcePath: "",
                 apis: routes_array
               }
+              api_description[:models] = parse_entity_models(models) unless models.empty?
+              api_description
             end
           end
 
@@ -172,7 +177,20 @@ module Grape
               version ? parsed_path.gsub('{version}', version) : parsed_path
             end
 
-            def parse_http_codes codes
+            def parse_entity_models(models)
+                result = {}
+                models.each do |model|
+                  name = model.to_s.split('::')[-1]
+                  result[name] = {
+                    id: name,
+                    name: name,
+                    properties: model.documentation
+                  }
+                end
+              result
+            end
+
+          def parse_http_codes codes
               codes ||= {}
               codes.collect do |k, v|
                 { code: k, reason: v }
