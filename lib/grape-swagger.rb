@@ -182,10 +182,17 @@ module Grape
                 result = {}
                 models.each do |model|
                   name = model.to_s.split('::')[-1]
+                  properties = model.exposures
+                  properties.merge!(model.documentation)
+                  properties.each do |k,v|
+                    if v.empty?
+                      properties[k] = {:type => 'unknown'}
+                    end
+                  end
                   result[name] = {
                     id: name,
                     name: name,
-                    properties: model.documentation
+                    properties: properties
                   }
                 end
               result
