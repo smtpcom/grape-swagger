@@ -100,7 +100,12 @@ module Grape
                       parse_params(route.route_params, route.route_path, route.route_method)
                 }
                 operations.merge!({:errorResponses => http_codes}) unless http_codes.empty?
-                operations.merge!({:responseClass => route.route_entity.to_s.split('::')[-1]}) if route.route_entity
+                if route.route_entity_list
+                  response_class = 'List['+route.route_entity.to_s.split('::')[-1]+']'
+                else
+                  response_class = route.route_entity.to_s.split('::')[-1]
+                end
+                operations.merge!({:responseClass => response_class}) if route.route_entity
                 {
                   :path => parse_path(route.route_path, api_version),
                   :operations => [operations]

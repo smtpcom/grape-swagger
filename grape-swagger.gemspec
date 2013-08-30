@@ -40,7 +40,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/tim-vandecasteele/grape-swagger"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.25"
+  s.rubygems_version = "1.8.26"
   s.summary = "Add swagger compliant documentation to your grape API"
 
   if s.respond_to? :specification_version then
