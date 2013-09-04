@@ -59,7 +59,7 @@ module Grape
             @@class_name = options[:class_name] || options[:mount_path].gsub('/','')
             @@markdown = options[:markdown]
             @@hide_documentation_path = options[:hide_documentation_path]
-            @@hide_format = options[:hide_format]
+            hide_format = options[:hide_format]
             api_version = options[:api_version]
             base_path = options[:base_path]
 
@@ -70,11 +70,11 @@ module Grape
               routes = target_class::combined_routes
 
               if @@hide_documentation_path
-                routes.reject!{ |route, value| "/#{route}/".index(parse_path(@@mount_path, nil) << '/') == 0 }
+                routes.reject!{ |route, value| "/#{route}/".index(parse_path(@@mount_path, nil, hide_format) << '/') == 0 }
               end
 
               routes_array = routes.keys.map do |local_route|
-                  { :path => "#{parse_path(route.route_path.gsub('(.:format)', ''),route.route_version)}/#{local_route}#{@@hide_format ? '' : '.{format}'}" }
+                  { :path => "#{parse_path(route.route_path.gsub('(.:format)', ''),route.route_version, hide_format)}/#{local_route}#{hide_format ? '' : '.{format}'}" }
               end
 
               {
@@ -115,7 +115,7 @@ module Grape
                 end
                 operations.merge!({:responseClass => response_class}) if route.route_entity
                 {
-                  :path => parse_path(route.route_path, api_version),
+                  :path => parse_path(route.route_path, api_version, hide_format),
                   :operations => [operations]
                 }
               end
@@ -178,9 +178,9 @@ module Grape
               end
             end
 
-            def parse_path(path, version)
+            def parse_path(path, version, hide_format)
               # adapt format to swagger format
-              parsed_path = path.gsub '(.:format)', ( @@hide_format ? '' : '.{format}')
+              parsed_path = path.gsub '(.:format)', ( hide_format ? '' : '.{format}')
               # This is attempting to emulate the behavior of
               # Rack::Mount::Strexp. We cannot use Strexp directly because
               # all it does is generate regular expressions for parsing URLs.
