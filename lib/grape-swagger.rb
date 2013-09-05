@@ -13,6 +13,16 @@ module Grape
 
         @combined_routes = {}
         routes.each do |route|
+          hide = false
+          if options[:hide_resources]
+            options[:hide_resources].each do |name|
+              if route.route_path.include? name
+                hide = true
+                break
+              end
+            end
+          end
+          next if hide
           resource = nil
           if options[:root_resources]
             options[:root_resources].each do |name|
