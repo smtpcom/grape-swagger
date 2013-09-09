@@ -206,7 +206,7 @@ module Grape
                 result = {}
                 models.each do |model|
                   name = model.to_s.split('::')[-1]
-                  properties = model.exposures
+                  properties = model.exposures.map {|prop_name,params| {params[:as]||prop_name => params}}.reduce(:merge)
                   properties.merge!(model.documentation)
                   properties.each do |k,v|
                     if v.empty?
