@@ -115,7 +115,7 @@ module Grape
                     :nickname   => route.route_method + route.route_path.gsub(/[\/:\(\)\.]/,'-'),
                     :httpMethod => route.route_method,
                     :parameters => parse_header_params(route.route_headers) +
-                      parse_params(route.route_params, route.route_path, route.route_method)
+                      parse_params(route.route_params, route.route_path, route.route_method, route.route_entity)
                 }
                 operations.merge!({:errorResponses => http_codes}) unless http_codes.empty?
                 if route.route_entity_list
@@ -144,7 +144,7 @@ module Grape
 
 
           helpers do
-            def parse_params(params, path, method)
+            def parse_params(params, path, method, model)
               if params
                 params.map do |param, value|
                   value[:type] = 'file' if value.is_a?(Hash) && value[:type] == 'Rack::Multipart::UploadedFile'
@@ -155,13 +155,18 @@ module Grape
                   required = value.is_a?(Hash) ? !!value[:required] : false
                   paramType = path.include?(":#{param}") ? 'path' : (method == 'POST') ? 'form' : 'query'
                   name = (value.is_a?(Hash) && value[:full_name]) || param
-                  {
+                  result = {
                     paramType: paramType,
                     name: name,
                     description: description,
                     dataType: dataType,
                     required: required
                   }
+                  values = model.exposures[param.to_sym][:documentation][:allowableValues] rescue nil
+                  if values
+                    result[:allowableValues] = values
+                  end
+                  result
                 end
               else
                 []
